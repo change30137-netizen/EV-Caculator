@@ -52,12 +52,12 @@
                     <input type="number" id="s1_l" value="15" class="input-field" oninput="updatePreview()">
                 </div>
                 <div>
-                    <label class="label-text">XLPE 1 (mm²)</label>
-                    <select id="s1_xlpe1" class="select-field" onchange="updatePreview()"></select>
+                    <label class="label-text">XLPE (mm²)</label>
+                    <select id="s1_xlpe" class="select-field" onchange="updatePreview()"></select>
                 </div>
                 <div>
-                    <label class="label-text">XLPE 2 (mm²)</label>
-                    <select id="s1_xlpe2" class="select-field" onchange="updatePreview()"></select>
+                    <label class="label-text">數量 (條數)</label>
+                    <input type="number" id="s1_qty" value="1" step="1" min="1" class="input-field bg-yellow-50" oninput="updatePreview()">
                 </div>
                 <div class="col-span-2 md:col-span-1">
                     <label class="label-text">電壓 (V)</label>
@@ -83,12 +83,12 @@
                     <input type="number" id="s2_l" value="5" class="input-field" oninput="updatePreview()">
                 </div>
                 <div>
-                    <label class="label-text">XLPE 1 (mm²)</label>
-                    <select id="s2_xlpe1" class="select-field" onchange="updatePreview()"></select>
+                    <label class="label-text">XLPE (mm²)</label>
+                    <select id="s2_xlpe" class="select-field" onchange="updatePreview()"></select>
                 </div>
                 <div>
-                    <label class="label-text">XLPE 2 (mm²)</label>
-                    <select id="s2_xlpe2" class="select-field" onchange="updatePreview()"></select>
+                    <label class="label-text">數量 (條數)</label>
+                    <input type="number" id="s2_qty" value="1" step="1" min="1" class="input-field bg-yellow-50" oninput="updatePreview()">
                 </div>
                 <div class="col-span-2 md:col-span-1">
                     <label class="label-text">電壓 (V)</label>
@@ -114,12 +114,12 @@
                     <input type="number" id="s3_l" value="45" class="input-field" oninput="updatePreview()">
                 </div>
                 <div>
-                    <label class="label-text">XLPE 1 (mm²)</label>
-                    <select id="s3_xlpe1" class="select-field" onchange="updatePreview()"></select>
+                    <label class="label-text">XLPE (mm²)</label>
+                    <select id="s3_xlpe" class="select-field" onchange="updatePreview()"></select>
                 </div>
                 <div>
-                    <label class="label-text">XLPE 2 (mm²)</label>
-                    <select id="s3_xlpe2" class="select-field" onchange="updatePreview()"></select>
+                    <label class="label-text">數量 (條數)</label>
+                    <input type="number" id="s3_qty" value="1" step="1" min="1" class="input-field bg-yellow-50" oninput="updatePreview()">
                 </div>
                 <div class="col-span-2 md:col-span-1">
                     <label class="label-text">電壓 (V)</label>
@@ -166,29 +166,25 @@
 
         function initSelects() {
             const sections = ['s1', 's2', 's3'];
-            const defaultValues1 = ['250', '30', '14'];
-            const defaultValues2 = ['250', '30', '14']; // 預設第二個選單也帶入同樣值
+            const defaultValues = ['250', '30', '14'];
             
             sections.forEach((sec, index) => {
-                ['xlpe1', 'xlpe2'].forEach((suffix, sIdx) => {
-                    const el = document.getElementById(`${sec}_${suffix}`);
-                    Object.keys(xlpeTable).forEach(size => {
-                        const opt = document.createElement('option');
-                        opt.value = size;
-                        opt.text = `${size}sq`;
-                        if (sIdx === 0 && size === defaultValues1[index]) opt.selected = true;
-                        if (sIdx === 1 && size === defaultValues2[index]) opt.selected = true;
-                        el.appendChild(opt);
-                    });
+                const el = document.getElementById(`${sec}_xlpe`);
+                Object.keys(xlpeTable).forEach(size => {
+                    const opt = document.createElement('option');
+                    opt.value = size;
+                    opt.text = `${size}sq`;
+                    if (size === defaultValues[index]) opt.selected = true;
+                    el.appendChild(opt);
                 });
             });
         }
 
         const getVal = (id) => {
             const val = parseFloat(document.getElementById(id).value);
-            return isNaN(val) ? 1 : val;
+            return isNaN(val) ? 0 : val;
         };
-        const getR = (id) => xlpeTable[document.getElementById(id).value] || 1;
+        const getR = (id) => xlpeTable[document.getElementById(id).value] || 0;
 
         function updatePreview() {
             document.querySelectorAll('.status-badge').forEach(el => {
@@ -199,37 +195,43 @@
             document.getElementById('verdict_box').innerText = "數值已變動，請重新計算";
 
             // 區間 1
-            const i1 = getVal('s1_i'), l1 = getVal('s1_l'), r1a = getR('s1_xlpe1'), r1b = getR('s1_xlpe2'), v1 = getVal('s1_v');
-            document.getElementById('s1_formula').innerHTML = `預覽: ${i1} x ${l1} x (${r1a} x ${r1b}) / 1000 / ${v1} = ? %`;
+            const i1 = getVal('s1_i'), l1 = getVal('s1_l'), r1 = getR('s1_xlpe'), v1 = getVal('s1_v'), q1 = getVal('s1_qty');
+            const rPart1 = q1 === 1 ? `${r1}` : `(${r1} x ${q1})`;
+            document.getElementById('s1_formula').innerHTML = `預覽: ${i1} x ${l1} x ${rPart1} / 1000 / ${v1} = ? %`;
             
             // 區間 2
-            const i2 = getVal('s2_i'), l2 = getVal('s2_l'), r2a = getR('s2_xlpe1'), r2b = getR('s2_xlpe2'), v2 = getVal('s2_v');
-            document.getElementById('s2_formula').innerHTML = `預覽: ${i2} x ${l2} x (${r2a} x ${r2b}) / 1000 / ${v2} = ? %`;
+            const i2 = getVal('s2_i'), l2 = getVal('s2_l'), r2 = getR('s2_xlpe'), v2 = getVal('s2_v'), q2 = getVal('s2_qty');
+            const rPart2 = q2 === 1 ? `${r2}` : `(${r2} x ${q2})`;
+            document.getElementById('s2_formula').innerHTML = `預覽: ${i2} x ${l2} x ${rPart2} / 1000 / ${v2} = ? %`;
 
             // 區間 3 (單相二線預設 2 倍)
-            const i3 = getVal('s3_i'), l3 = getVal('s3_l'), r3a = getR('s3_xlpe1'), r3b = getR('s3_xlpe2'), v3 = getVal('s3_v');
-            document.getElementById('s3_formula').innerHTML = `預覽: 2 x ${i3} x ${l3} x (${r3a} x ${r3b}) / 1000 / ${v3} = ? %`;
+            const i3 = getVal('s3_i'), l3 = getVal('s3_l'), r3 = getR('s3_xlpe'), v3 = getVal('s3_v'), q3 = getVal('s3_qty');
+            const rPart3 = q3 === 1 ? `${r3}` : `(${r3} x ${q3})`;
+            document.getElementById('s3_formula').innerHTML = `預覽: 2 x ${i3} x ${l3} x ${rPart3} / 1000 / ${v3} = ? %`;
         }
 
         function calculateAll() {
             // 區間 1
-            const i1 = getVal('s1_i'), l1 = getVal('s1_l'), r1a = getR('s1_xlpe1'), r1b = getR('s1_xlpe2'), v1 = getVal('s1_v');
-            const vd1 = (i1 * l1 * (r1a * r1b)) / 1000 / v1 * 100;
-            document.getElementById('s1_formula').innerHTML = `VD% = ${i1} x ${l1} x (${r1a} x ${r1b}) / 1000 / ${v1} = <strong>${vd1.toFixed(3)}%</strong>`;
+            const i1 = getVal('s1_i'), l1 = getVal('s1_l'), r1 = getR('s1_xlpe'), v1 = getVal('s1_v'), q1 = getVal('s1_qty');
+            const vd1 = (i1 * l1 * (r1 * q1)) / 1000 / v1 * 100;
+            const rPart1 = q1 === 1 ? `${r1}` : `(${r1} x ${q1})`;
+            document.getElementById('s1_formula').innerHTML = `VD% = ${i1} x ${l1} x ${rPart1} / 1000 / ${v1} = <strong>${vd1.toFixed(3)}%</strong>`;
             document.getElementById('badge1').innerText = 'OK';
             document.getElementById('badge1').className = 'status-badge bg-blue-100 text-blue-700';
             
             // 區間 2
-            const i2 = getVal('s2_i'), l2 = getVal('s2_l'), r2a = getR('s2_xlpe1'), r2b = getR('s2_xlpe2'), v2 = getVal('s2_v');
-            const vd2 = (i2 * l2 * (r2a * r2b)) / 1000 / v2 * 100;
-            document.getElementById('s2_formula').innerHTML = `VD% = ${i2} x ${l2} x (${r2a} x ${r2b}) / 1000 / ${v2} = <strong>${vd2.toFixed(3)}%</strong>`;
+            const i2 = getVal('s2_i'), l2 = getVal('s2_l'), r2 = getR('s2_xlpe'), v2 = getVal('s2_v'), q2 = getVal('s2_qty');
+            const vd2 = (i2 * l2 * (r2 * q2)) / 1000 / v2 * 100;
+            const rPart2 = q2 === 1 ? `${r2}` : `(${r2} x ${q2})`;
+            document.getElementById('s2_formula').innerHTML = `VD% = ${i2} x ${l2} x ${rPart2} / 1000 / ${v2} = <strong>${vd2.toFixed(3)}%</strong>`;
             document.getElementById('badge2').innerText = 'OK';
             document.getElementById('badge2').className = 'status-badge bg-emerald-100 text-emerald-700';
 
             // 區間 3
-            const i3 = getVal('s3_i'), l3 = getVal('s3_l'), r3a = getR('s3_xlpe1'), r3b = getR('s3_xlpe2'), v3 = getVal('s3_v');
-            const vd3 = (2 * i3 * l3 * (r3a * r3b)) / 1000 / v3 * 100;
-            document.getElementById('s3_formula').innerHTML = `VD% = 2 x ${i3} x ${l3} x (${r3a} x ${r3b}) / 1000 / ${v3} = <strong>${vd3.toFixed(3)}%</strong>`;
+            const i3 = getVal('s3_i'), l3 = getVal('s3_l'), r3 = getR('s3_xlpe'), v3 = getVal('s3_v'), q3 = getVal('s3_qty');
+            const vd3 = (2 * i3 * l3 * (r3 * q3)) / 1000 / v3 * 100;
+            const rPart3 = q3 === 1 ? `${r3}` : `(${r3} x ${q3})`;
+            document.getElementById('s3_formula').innerHTML = `VD% = 2 x ${i3} x ${l3} x ${rPart3} / 1000 / ${v3} = <strong>${vd3.toFixed(3)}%</strong>`;
             document.getElementById('badge3').innerText = 'OK';
             document.getElementById('badge3').className = 'status-badge bg-orange-100 text-orange-700';
 
