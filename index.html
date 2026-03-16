@@ -17,6 +17,8 @@
         .status-badge { @apply px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold transition-all duration-300; }
         .pending { @apply bg-gray-100 text-gray-400; }
         .calculated { @apply bg-blue-100 text-blue-700; }
+        /* 報告專用字體樣式 */
+        .report-text { font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-10">
@@ -29,7 +31,7 @@
                 <p class="text-[9px] md:text-[10px] text-slate-400">Terry CTO 內部技術規範版本</p>
             </div>
             <div class="flex gap-2">
-                <button onclick="downloadPDF()" class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded text-xs md:text-sm font-medium transition">下載 PDF</button>
+                <button onclick="downloadPDF()" class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded text-xs md:text-sm font-medium transition">下載 PDF 報告</button>
             </div>
         </div>
     </nav>
@@ -142,7 +144,7 @@
         </div>
 
         <!-- 計算按鈕 -->
-        <div class="py-2">
+        <div class="py-2 no-print">
             <button onclick="calculateAll()" id="btn-calc" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg shadow-xl transition active:scale-95 flex items-center justify-center gap-2">
                 <span>⚡</span> 執行檢討計算
             </button>
@@ -162,8 +164,13 @@
                     <p class="text-[11px] mt-1" id="check_all">目標：< 5%</p>
                 </div>
             </div>
-            <div id="verdict_box" class="p-3 md:p-4 rounded-xl text-center text-lg md:text-xl font-bold bg-white/50 border-2 border-dashed border-slate-300">
+            <div id="verdict_box" class="p-3 md:p-4 rounded-xl text-center text-lg md:text-xl font-bold bg-white/50 border-2 border-dashed border-slate-300 mb-6">
                 請執行計算
+            </div>
+            
+            <!-- (A) 各區間壓降檢討 文字區塊 (隱藏，僅計算後顯示於報告) -->
+            <div id="text-report-output" class="hidden report-text p-6 bg-white rounded-lg shadow-sm border border-gray-100 text-slate-900 leading-relaxed text-sm md:text-base">
+                <!-- 由 JavaScript 動態填入 -->
             </div>
         </div>
     </main>
@@ -197,6 +204,7 @@
             return isNaN(val) ? 0 : val;
         };
         const getR = (id) => xlpeTable[document.getElementById(id).value] || 0;
+        const getSize = (id) => document.getElementById(id).value;
 
         function updatePreview() {
             document.querySelectorAll('.status-badge').forEach(el => {
@@ -205,42 +213,40 @@
             });
             document.getElementById('result-section').className = "bg-slate-200 rounded-2xl p-5 text-slate-500 shadow-inner";
             document.getElementById('verdict_box').innerText = "數值已變動，請重新計算";
+            document.getElementById('text-report-output').classList.add('hidden');
 
-            // 區間 1
             const i1 = getVal('s1_i'), l1 = getVal('s1_l'), r1 = getR('s1_xlpe'), v1 = getVal('s1_v'), q1 = getVal('s1_qty');
             const rPart1 = q1 === 1 ? `${r1}` : `(${r1} x ${q1})`;
             document.getElementById('s1_formula').innerHTML = `預覽: ${i1} x ${l1} x ${rPart1} / 1000 / ${v1} = ? %`;
             
-            // 區間 2
             const i2 = getVal('s2_i'), l2 = getVal('s2_l'), r2 = getR('s2_xlpe'), v2 = getVal('s2_v'), q2 = getVal('s2_qty');
             const rPart2 = q2 === 1 ? `${r2}` : `(${r2} x ${q2})`;
             document.getElementById('s2_formula').innerHTML = `預覽: ${i2} x ${l2} x ${rPart2} / 1000 / ${v2} = ? %`;
 
-            // 區間 3 (單相二線預設 2 倍)
             const i3 = getVal('s3_i'), l3 = getVal('s3_l'), r3 = getR('s3_xlpe'), v3 = getVal('s3_v'), q3 = getVal('s3_qty');
             const rPart3 = q3 === 1 ? `${r3}` : `(${r3} x ${q3})`;
             document.getElementById('s3_formula').innerHTML = `預覽: 2 x ${i3} x ${l3} x ${rPart3} / 1000 / ${v3} = ? %`;
         }
 
         function calculateAll() {
-            // 區間 1
-            const i1 = getVal('s1_i'), l1 = getVal('s1_l'), r1 = getR('s1_xlpe'), v1 = getVal('s1_v'), q1 = getVal('s1_qty');
+            // 區間 1 (受電->錶前)
+            const i1 = getVal('s1_i'), l1 = getVal('s1_l'), r1 = getR('s1_xlpe'), v1 = getVal('s1_v'), q1 = getVal('s1_qty'), sz1 = getSize('s1_xlpe');
             const vd1 = (i1 * l1 * (r1 * q1)) / 1000 / v1 * 100;
             const rPart1 = q1 === 1 ? `${r1}` : `(${r1} x ${q1})`;
             document.getElementById('s1_formula').innerHTML = `VD% = ${i1} x ${l1} x ${rPart1} / 1000 / ${v1} = <strong>${vd1.toFixed(3)}%</strong>`;
             document.getElementById('badge1').innerText = 'OK';
             document.getElementById('badge1').className = 'status-badge bg-blue-100 text-blue-700';
             
-            // 區間 2
-            const i2 = getVal('s2_i'), l2 = getVal('s2_l'), r2 = getR('s2_xlpe'), v2 = getVal('s2_v'), q2 = getVal('s2_qty');
+            // 區間 2 (錶前->錶後)
+            const i2 = getVal('s2_i'), l2 = getVal('s2_l'), r2 = getR('s2_xlpe'), v2 = getVal('s2_v'), q2 = getVal('s2_qty'), sz2 = getSize('s2_xlpe');
             const vd2 = (i2 * l2 * (r2 * q2)) / 1000 / v2 * 100;
             const rPart2 = q2 === 1 ? `${r2}` : `(${r2} x ${q2})`;
             document.getElementById('s2_formula').innerHTML = `VD% = ${i2} x ${l2} x ${rPart2} / 1000 / ${v2} = <strong>${vd2.toFixed(3)}%</strong>`;
             document.getElementById('badge2').innerText = 'OK';
             document.getElementById('badge2').className = 'status-badge bg-emerald-100 text-emerald-700';
 
-            // 區間 3
-            const i3 = getVal('s3_i'), l3 = getVal('s3_l'), r3 = getR('s3_xlpe'), v3 = getVal('s3_v'), q3 = getVal('s3_qty');
+            // 區間 3 (錶後->CH1)
+            const i3 = getVal('s3_i'), l3 = getVal('s3_l'), r3 = getR('s3_xlpe'), v3 = getVal('s3_v'), q3 = getVal('s3_qty'), sz3 = getSize('s3_xlpe');
             const vd3 = (2 * i3 * l3 * (r3 * q3)) / 1000 / v3 * 100;
             const rPart3 = q3 === 1 ? `${r3}` : `(${r3} x ${q3})`;
             document.getElementById('s3_formula').innerHTML = `VD% = 2 x ${i3} x ${l3} x ${rPart3} / 1000 / ${v3} = <strong>${vd3.toFixed(3)}%</strong>`;
@@ -265,24 +271,79 @@
 
             if (is12Pass && isAllPass) {
                 vBox.innerText = "⭐ 檢討合格";
-                vBox.className = "p-3 rounded-xl text-center text-lg font-bold bg-emerald-500 text-white shadow-lg";
+                vBox.className = "p-3 rounded-xl text-center text-lg font-bold bg-emerald-500 text-white shadow-lg mb-6";
             } else {
                 vBox.innerText = "⚠️ 不合格";
-                vBox.className = "p-3 rounded-xl text-center text-lg font-bold bg-red-600 text-white shadow-lg";
+                vBox.className = "p-3 rounded-xl text-center text-lg font-bold bg-red-600 text-white shadow-lg mb-6";
             }
+
+            // 生成 (A) 各區間壓降檢討 文字
+            const outputDiv = document.getElementById('text-report-output');
+            outputDiv.classList.remove('hidden');
+            outputDiv.innerHTML = `
+                <div class="space-y-4">
+                    <h3 class="font-bold text-lg border-b pb-2">(A) 各區間壓降檢討：</h3>
+                    
+                    <div class="report-section">
+                        <p class="font-bold">1. [受電開關->錶前開關]</p>
+                        <p>單相三線 [XLPE ${sz1}sq x 3, P${q1 > 1 ? q1 : ''}]</p>
+                        <p>VD%=電壓降, 電流=${i1}A, 距離=${l1}m, 功率因數=1</p>
+                        <p class="font-mono">VD%= ${i1} x ${l1} x (${r1} x 1 + 0) / 1000 / ${v1} = ${vd1.toFixed(3)}%</p>
+                    </div>
+
+                    <div class="report-section">
+                        <p class="font-bold">2. [錶前開關->錶後開關]</p>
+                        <p>單相三線 [XLPE ${sz2}sq x 3, P${q2 > 1 ? q2 : ''}]</p>
+                        <p>VD%=電壓降, 電流=${i2}A, 距離=${l2}m, 功率因數=1</p>
+                        <p class="font-mono">VD%= ${i2} x ${l2} x (${r2} x 1 + 0) / 1000 / ${v2} = ${vd2.toFixed(3)}%</p>
+                    </div>
+
+                    <div class="report-section">
+                        <p class="font-bold">3. [錶後開關->CH1]</p>
+                        <p>單相兩線 [XLPE ${sz3}sq x 2 + PVC 5.5mm]</p>
+                        <p>VD%=電壓降, 電流=${i3}A, 距離=${l3}m, 功率因數=1</p>
+                        <p class="font-mono">VD%= 2 x ${i3} x ${l3} x (${r3} x 1 + 0) / 1000 / ${v3} = ${vd3.toFixed(3)}% < 3%</p>
+                    </div>
+
+                    <div class="report-summary mt-6 pt-4 border-t-2 border-slate-200 bg-slate-50 p-4 rounded text-slate-700">
+                        <p>受電開關->錶後開關壓降檢討：${vd1.toFixed(3)}% + ${vd2.toFixed(3)}% = <strong>${s12.toFixed(3)}%</strong> ${is12Pass ? '< 2%' : '> 2%'}</p>
+                        <p>總壓降檢討：${s12.toFixed(3)}% + ${vd3.toFixed(3)}% = <strong>${sall.toFixed(3)}%</strong> ${isAllPass ? '< 5%' : '> 5%'}</p>
+                    </div>
+                </div>
+            `;
         }
 
         async function downloadPDF() {
-            const container = document.getElementById('report-container');
+            // 下載前確保最新計算
             calculateAll();
-            const canvas = await html2canvas(container, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`電壓降報告_${new Date().toLocaleDateString()}.pdf`);
+            
+            const container = document.getElementById('report-container');
+            
+            // 隱藏不需要在 PDF 出現的按鈕
+            const calcBtn = document.querySelector('.no-print');
+            calcBtn.style.display = 'none';
+
+            try {
+                const canvas = await html2canvas(container, { 
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#f8fafc' 
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`電壓降檢討報告_${new Date().toLocaleDateString()}.pdf`);
+            } catch (err) {
+                console.error("PDF 生成失敗", err);
+            } finally {
+                calcBtn.style.display = 'block';
+            }
         }
 
         window.onload = () => {
