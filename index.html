@@ -61,7 +61,11 @@
                 </div>
                 <div class="col-span-2 md:col-span-1">
                     <label class="label-text">電壓 (V)</label>
-                    <input type="number" id="s1_v" value="110" class="input-field" oninput="updatePreview()">
+                    <select id="s1_v" class="select-field" onchange="updatePreview()">
+                        <option value="110" selected>110V</option>
+                        <option value="220">220V</option>
+                        <option value="380">380V</option>
+                    </select>
                 </div>
             </div>
             <div id="s1_formula" class="formula-display italic">填入數值以預覽...</div>
@@ -92,7 +96,11 @@
                 </div>
                 <div class="col-span-2 md:col-span-1">
                     <label class="label-text">電壓 (V)</label>
-                    <input type="number" id="s2_v" value="110" class="input-field" oninput="updatePreview()">
+                    <select id="s2_v" class="select-field" onchange="updatePreview()">
+                        <option value="110" selected>110V</option>
+                        <option value="220">220V</option>
+                        <option value="380">380V</option>
+                    </select>
                 </div>
             </div>
             <div id="s2_formula" class="formula-display italic">填入數值以預覽...</div>
@@ -123,7 +131,11 @@
                 </div>
                 <div class="col-span-2 md:col-span-1">
                     <label class="label-text">電壓 (V)</label>
-                    <input type="number" id="s3_v" value="220" class="input-field" oninput="updatePreview()">
+                    <select id="s3_v" class="select-field" onchange="updatePreview()">
+                        <option value="110">110V</option>
+                        <option value="220" selected>220V</option>
+                        <option value="380">380V</option>
+                    </select>
                 </div>
             </div>
             <div id="s3_formula" class="formula-display italic">填入數值以預覽...</div>
